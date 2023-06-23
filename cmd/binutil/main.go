@@ -77,6 +77,11 @@ func handler(c *cli.Context) (err error) {
 			return cli.Exit(fmt.Errorf("could not parse %q: %w", in, err), 1)
 		}
 
+		// var uu rlid.RLID
+		// if uu, err = rlid.Parse(in); err != nil {
+		// 	return cli.Exit(fmt.Errorf("could not parse %q: %w", in, err), 1)
+		// }
+
 		fmt.Println(base64.StdEncoding.EncodeToString(uu.Bytes()))
 	}
 	return nil
