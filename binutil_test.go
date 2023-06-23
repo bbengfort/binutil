@@ -3,7 +3,17 @@ package binutil_test
 import (
 	"bytes"
 	crand "crypto/rand"
+	"testing"
+
+	"github.com/bbengfort/binutil"
+	"github.com/stretchr/testify/require"
 )
+
+func TestUnknownDecoder(t *testing.T) {
+	dec, err := binutil.NewDecoder(" UnknownDECODER ")
+	require.EqualError(t, err, "no registered decoder with the name \"unknowndecoder\"")
+	require.Nil(t, dec, "expected returned decoder to be nil")
+}
 
 const (
 	smallSize         = 16

@@ -33,3 +33,11 @@ func TestUUID(t *testing.T) {
 		require.Equal(t, tc, s, "expected encoded string to match test case %d", i)
 	}
 }
+
+func TestRegisteredUUID(t *testing.T) {
+	dec, err := binutil.NewDecoder(binutil.UUIDDecoder)
+	require.NoError(t, err, "could not create uuid decoder")
+
+	_, err = dec.DecodeString("36a15b36-3e89-45cc-ae97-4813ce4ead77")
+	require.NoError(t, err, "could not decode uuid correctly")
+}

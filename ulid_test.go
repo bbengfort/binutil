@@ -33,3 +33,11 @@ func TestULID(t *testing.T) {
 		require.Equal(t, tc, s, "expected encoded string to match test case %d", i)
 	}
 }
+
+func TestRegisteredULID(t *testing.T) {
+	dec, err := binutil.NewDecoder(binutil.ULIDDecoder)
+	require.NoError(t, err, "could not create ulid decoder")
+
+	_, err = dec.DecodeString("01H3MH1EP15QT769GDQFQ1E7T4")
+	require.NoError(t, err, "could not decode ulid correctly")
+}

@@ -37,3 +37,11 @@ func TestHex(t *testing.T) {
 		require.Equal(t, fixture.data, data, "expected unchanged binary data from decoded string for fixture %q", fixture.name)
 	}
 }
+
+func TestRegisteredHex(t *testing.T) {
+	dec, err := binutil.NewDecoder(binutil.HexDecoder)
+	require.NoError(t, err, "could not create hex decoder")
+
+	_, err = dec.DecodeString("68656c6c6f20776f726c64")
+	require.NoError(t, err, "could not decode hex correctly")
+}

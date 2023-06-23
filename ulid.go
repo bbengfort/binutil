@@ -2,6 +2,12 @@ package binutil
 
 import "github.com/oklog/ulid/v2"
 
+func init() {
+	RegisterDecoder(ULIDDecoder, func() Decoder { return &ULID{} })
+}
+
+const ULIDDecoder = "ulid"
+
 type ULID struct {
 	ULID ulid.ULID
 }

@@ -2,6 +2,12 @@ package binutil
 
 import "github.com/google/uuid"
 
+func init() {
+	RegisterDecoder(UUIDDecoder, func() Decoder { return &UUID{} })
+}
+
+const UUIDDecoder = "uuid"
+
 type UUID struct {
 	UUID uuid.UUID
 }

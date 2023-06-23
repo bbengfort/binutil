@@ -1,6 +1,10 @@
 package binutil
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+	"sync"
+)
 
 // An encoder is an object that can marshal either a binary or a string representation
 // of it's underlying data. For example a UUID is 16 bytes binary or it can be a GUID
@@ -26,8 +30,23 @@ type Pipeline struct {
 }
 
 // New returns a pipeline that can convert binary and string data.
-func New(steps ...Decoder) *Pipeline {
-	return &Pipeline{steps: steps}
+func New(steps ...any) (_ *Pipeline, err error) {
+	decoders := make([]Decoder, 0, len(steps))
+	for _, step := range steps {
+		var decoder Decoder
+		switch t := step.(type) {
+		case string:
+			if decoder, err = NewDecoder(t); err != nil {
+				return nil, err
+			}
+		case Decoder:
+			decoder = t
+		default:
+			return nil, ErrUnknownStepType
+		}
+		decoders = append(decoders, decoder)
+	}
+	return &Pipeline{steps: decoders}, nil
 }
 
 // Bin2Bin transforms binary input data into binary output data by decoding the binary
@@ -156,4 +175,40 @@ func (p *Pipeline) Str2Str(in string) (out string, err error) {
 	}
 
 	return out, nil
+}
+
+var (
+	decmu    sync.RWMutex
+	decoders map[string]DecoderConstructor
+)
+
+// DecoderConstructors are functions that create a new Decoder ready for use.
+type DecoderConstructor func() Decoder
+
+// Register a decoder constructor so that the decoder can be referenced by the name
+// suplied and users can instantiate it directly from the type name. Note that names are
+// case insensitive so MyDecoder is the same as mydecoder.
+func RegisterDecoder(name string, constructor DecoderConstructor) {
+	// All lookups are case insensitive
+	name = strings.TrimSpace(strings.ToLower(name))
+
+	decmu.Lock()
+	defer decmu.Unlock()
+	if decoders == nil {
+		decoders = make(map[string]DecoderConstructor)
+	}
+	decoders[name] = constructor
+}
+
+// Create a decoder by name rather than by directly instantiating one.
+func NewDecoder(name string) (Decoder, error) {
+	// All lookups are case insensitive
+	name = strings.TrimSpace(strings.ToLower(name))
+
+	decmu.RLock()
+	defer decmu.RUnlock()
+	if constructor, ok := decoders[name]; ok {
+		return constructor(), nil
+	}
+	return nil, fmt.Errorf("no registered decoder with the name %q", name)
 }

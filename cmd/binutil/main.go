@@ -1,12 +1,10 @@
 package main
 
 import (
-	"encoding/base64"
 	"fmt"
 	"os"
 
 	"github.com/bbengfort/binutil"
-	"github.com/oklog/ulid/v2"
 	"github.com/urfave/cli/v2"
 )
 
@@ -24,15 +22,16 @@ func main() {
 			Usage:   "read data from the specified path on disk",
 		},
 		&cli.StringFlag{
-			Name:    "decode",
-			Aliases: []string{"d"},
-			Usage:   "the format to decode the input from",
+			Name:     "decode",
+			Aliases:  []string{"d"},
+			Usage:    "the format to decode the input from",
+			Required: true,
 		},
 		&cli.StringFlag{
-			Name:    "encode",
-			Aliases: []string{"e"},
-			Usage:   "the format to encode the input to",
-			Value:   "string",
+			Name:     "encode",
+			Aliases:  []string{"e"},
+			Usage:    "the format to encode the input to",
+			Required: true,
 		},
 		&cli.BoolFlag{
 			Name:    "binary",
@@ -68,21 +67,20 @@ func handler(c *cli.Context) (err error) {
 		return cli.Exit("reading binary input not implemented yet", 3)
 	}
 
+	// TODO: handle pipeline of encoders/decoders
+	var pipe *binutil.Pipeline
+	if pipe, err = binutil.New(c.String("decode"), c.String("encode")); err != nil {
+		return cli.Exit(err, 1)
+	}
+
 	args := c.Args()
 	for i := 0; i < c.NArg(); i++ {
+		var out string
 		in := args.Get(i)
-
-		var uu ulid.ULID
-		if uu, err = ulid.Parse(in); err != nil {
-			return cli.Exit(fmt.Errorf("could not parse %q: %w", in, err), 1)
+		if out, err = pipe.Str2Str(in); err != nil {
+			return cli.Exit(err, 1)
 		}
-
-		// var uu rlid.RLID
-		// if uu, err = rlid.Parse(in); err != nil {
-		// 	return cli.Exit(fmt.Errorf("could not parse %q: %w", in, err), 1)
-		// }
-
-		fmt.Println(base64.StdEncoding.EncodeToString(uu.Bytes()))
+		fmt.Println(out)
 	}
 	return nil
 }
