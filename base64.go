@@ -14,19 +14,11 @@ const (
 )
 
 func init() {
-	RegisterDecoder(Base64Decoder, func() Decoder { return NewBase64(B64SchemeStd) })
-	RegisterDecoder(StdBase64Decoder, func() Decoder { return NewBase64(B64SchemeStd) })
-	RegisterDecoder("b64", func() Decoder { return NewBase64(B64SchemeStd) })
-	RegisterDecoder("base64std", func() Decoder { return NewBase64(B64SchemeStd) })
-	RegisterDecoder(RawBase64Decoder, func() Decoder { return NewBase64(B64SchemeRawStd) })
-	RegisterDecoder("base64raw", func() Decoder { return NewBase64(B64SchemeRawStd) })
-	RegisterDecoder("b64raw", func() Decoder { return NewBase64(B64SchemeRawStd) })
-	RegisterDecoder(URLBase64Decoder, func() Decoder { return NewBase64(B64SchemeURL) })
-	RegisterDecoder("base64url", func() Decoder { return NewBase64(B64SchemeURL) })
-	RegisterDecoder("b64url", func() Decoder { return NewBase64(B64SchemeURL) })
-	RegisterDecoder(RawURLBase64Decoder, func() Decoder { return NewBase64(B64SchemeRawURL) })
-	RegisterDecoder("base64rawurl", func() Decoder { return NewBase64(B64SchemeRawURL) })
-	RegisterDecoder("b64rawurl", func() Decoder { return NewBase64(B64SchemeRawURL) })
+	RegisterDecoder(Base64Decoder, func() Decoder { return NewBase64(B64SchemeStd) }, "b64")
+	RegisterDecoder(StdBase64Decoder, func() Decoder { return NewBase64(B64SchemeStd) }, "base64std", "b64std")
+	RegisterDecoder(RawBase64Decoder, func() Decoder { return NewBase64(B64SchemeRawStd) }, "base64raw", "b64raw")
+	RegisterDecoder(URLBase64Decoder, func() Decoder { return NewBase64(B64SchemeURL) }, "base64url", "b64url")
+	RegisterDecoder(RawURLBase64Decoder, func() Decoder { return NewBase64(B64SchemeRawURL) }, "base64rawurl", "b64rawurl")
 }
 
 const (

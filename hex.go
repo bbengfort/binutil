@@ -3,8 +3,7 @@ package binutil
 import "encoding/hex"
 
 func init() {
-	RegisterDecoder(HexDecoder, func() Decoder { return &Hex{} })
-	RegisterDecoder("hexadecimal", func() Decoder { return &Hex{} })
+	RegisterDecoder(HexDecoder, func() Decoder { return &Hex{} }, "hexadecimal")
 }
 
 const HexDecoder = "hex"

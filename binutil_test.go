@@ -108,10 +108,34 @@ func TestPipelineStr2Bin(t *testing.T) {
 	}
 }
 
+func TestEmptyPipeline(t *testing.T) {
+	pipe := &binutil.Pipeline{}
+
+	_, err := pipe.Bin2Bin([]byte{42, 42, 42})
+	require.ErrorIs(t, err, binutil.ErrEmptyPipeline)
+
+	_, err = pipe.Bin2Str([]byte{42, 42, 42})
+	require.ErrorIs(t, err, binutil.ErrEmptyPipeline)
+
+	_, err = pipe.Str2Bin("foo")
+	require.ErrorIs(t, err, binutil.ErrEmptyPipeline)
+
+	_, err = pipe.Str2Str("foo")
+	require.ErrorIs(t, err, binutil.ErrEmptyPipeline)
+
+}
+
 func TestUnknownDecoder(t *testing.T) {
 	dec, err := binutil.NewDecoder(" UnknownDECODER ")
 	require.EqualError(t, err, "no registered decoder with the name \"unknowndecoder\"")
 	require.Nil(t, dec, "expected returned decoder to be nil")
+}
+
+func TestDecoderNames(t *testing.T) {
+	names := binutil.DecoderNames()
+	require.NotEmpty(t, names, "expected a list of decoder names to be returned")
+	require.Contains(t, names, "base64", "expected a non-aliased name to be in the list of names")
+	require.NotContains(t, names, "b64", "expected aliases to be omitted from the list of names")
 }
 
 const (

@@ -14,7 +14,8 @@ func main() {
 	app.Name = "binutil"
 	app.Version = binutil.Version()
 	app.Usage = "helpers for converting to and from binary and string representations"
-	app.UsageText = "binutil [-d DECODE] [-e ENCODE] [-r PATH] [INPUT]"
+	app.UsageText = "binutil [-d DECODE] [-e ENCODE] [-r PATH] [INPUT]\n\n  The encoder and decoder must be one of the registered decoders;\n  to see availabe decoders:\n\nbinutil decoders\n\n  For example to convert a ulid to base64:\n\nbinutil -d ulid -e b64 01H3W3MX9A4AFNW55R0MNMQR6Y"
+	app.Action = handler
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
 			Name:    "read",
@@ -22,16 +23,14 @@ func main() {
 			Usage:   "read data from the specified path on disk",
 		},
 		&cli.StringFlag{
-			Name:     "decode",
-			Aliases:  []string{"d"},
-			Usage:    "the format to decode the input from",
-			Required: true,
+			Name:    "decode",
+			Aliases: []string{"d"},
+			Usage:   "the format to decode the input from",
 		},
 		&cli.StringFlag{
-			Name:     "encode",
-			Aliases:  []string{"e"},
-			Usage:    "the format to encode the input to",
-			Required: true,
+			Name:    "encode",
+			Aliases: []string{"e"},
+			Usage:   "the format to encode the input to",
 		},
 		&cli.BoolFlag{
 			Name:    "binary",
@@ -39,7 +38,14 @@ func main() {
 			Usage:   "the input is binary data not a UTF-8 string",
 		},
 	}
-	app.Action = handler
+	app.Commands = []*cli.Command{
+		{
+			Name:    "decoders",
+			Aliases: []string{"d"},
+			Usage:   "print the list of registered decoders",
+			Action:  listDecoders,
+		},
+	}
 
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "fatal error: %s\n", err.Error())
@@ -67,7 +73,11 @@ func handler(c *cli.Context) (err error) {
 		return cli.Exit("reading binary input not implemented yet", 3)
 	}
 
-	// TODO: handle pipeline of encoders/decoders
+	if c.String("decode") == "" || c.String("encode") == "" {
+		return cli.Exit("encoder and decoder must be specified", 1)
+	}
+
+	// Handle pipeline of encoders/decoders
 	var pipe *binutil.Pipeline
 	if pipe, err = binutil.New(c.String("decode"), c.String("encode")); err != nil {
 		return cli.Exit(err, 1)
@@ -81,6 +91,15 @@ func handler(c *cli.Context) (err error) {
 			return cli.Exit(err, 1)
 		}
 		fmt.Println(out)
+	}
+	return nil
+}
+
+func listDecoders(c *cli.Context) error {
+	names := binutil.DecoderNames()
+	fmt.Println("Registered Decoders:\n====================")
+	for _, name := range names {
+		fmt.Printf("- %s\n", name)
 	}
 	return nil
 }

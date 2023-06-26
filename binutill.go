@@ -2,6 +2,7 @@ package binutil
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -179,25 +180,34 @@ func (p *Pipeline) Str2Str(in string) (out string, err error) {
 
 var (
 	decmu    sync.RWMutex
-	decoders map[string]DecoderConstructor
+	decoders map[string]decoder
 )
 
 // DecoderConstructors are functions that create a new Decoder ready for use.
 type DecoderConstructor func() Decoder
 
+type decoder struct {
+	constructor DecoderConstructor
+	alias       bool
+}
+
 // Register a decoder constructor so that the decoder can be referenced by the name
 // suplied and users can instantiate it directly from the type name. Note that names are
 // case insensitive so MyDecoder is the same as mydecoder.
-func RegisterDecoder(name string, constructor DecoderConstructor) {
+func RegisterDecoder(name string, constructor DecoderConstructor, aliases ...string) {
 	// All lookups are case insensitive
 	name = strings.TrimSpace(strings.ToLower(name))
 
 	decmu.Lock()
 	defer decmu.Unlock()
 	if decoders == nil {
-		decoders = make(map[string]DecoderConstructor)
+		decoders = make(map[string]decoder)
 	}
-	decoders[name] = constructor
+
+	decoders[name] = decoder{constructor, false}
+	for _, alias := range aliases {
+		decoders[alias] = decoder{constructor, true}
+	}
 }
 
 // Create a decoder by name rather than by directly instantiating one.
@@ -207,8 +217,23 @@ func NewDecoder(name string) (Decoder, error) {
 
 	decmu.RLock()
 	defer decmu.RUnlock()
-	if constructor, ok := decoders[name]; ok {
-		return constructor(), nil
+	if decoder, ok := decoders[name]; ok {
+		return decoder.constructor(), nil
 	}
 	return nil, fmt.Errorf("no registered decoder with the name %q", name)
+}
+
+func DecoderNames() []string {
+	decmu.RLock()
+	defer decmu.RUnlock()
+
+	out := make([]string, 0, len(decoders))
+	for name, decoder := range decoders {
+		if !decoder.alias {
+			out = append(out, name)
+		}
+	}
+
+	sort.Strings(out)
+	return out
 }

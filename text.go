@@ -17,12 +17,10 @@ const (
 )
 
 func init() {
-	RegisterDecoder(TextDecoder, func() Decoder { return NewText(UTF8Encoding) })
-	RegisterDecoder(UTF8Decoder, func() Decoder { return NewText(UTF8Encoding) })
-	RegisterDecoder("utf8", func() Decoder { return NewText(UTF8Encoding) })
-	RegisterDecoder("txt", func() Decoder { return NewText(UTF8Encoding) })
+	RegisterDecoder(TextDecoder, func() Decoder { return NewText(UTF8Encoding) }, "txt")
+	RegisterDecoder(UTF8Decoder, func() Decoder { return NewText(UTF8Encoding) }, "utf8")
 	RegisterDecoder(ASCIIDecoder, func() Decoder { return NewText(ASCIIEncoding) })
-	RegisterDecoder(Latin1Decoder, func() Decoder { return NewText(Latin1Encoding) })
+	RegisterDecoder(Latin1Decoder, func() Decoder { return NewText(Latin1Encoding) }, "latin-1")
 }
 
 const (

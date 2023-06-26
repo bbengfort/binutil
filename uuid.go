@@ -3,7 +3,7 @@ package binutil
 import "github.com/google/uuid"
 
 func init() {
-	RegisterDecoder(UUIDDecoder, func() Decoder { return &UUID{} })
+	RegisterDecoder(UUIDDecoder, func() Decoder { return &UUID{} }, "uuid4", "uuid5")
 }
 
 const UUIDDecoder = "uuid"
