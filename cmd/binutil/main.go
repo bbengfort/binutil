@@ -1,11 +1,21 @@
 package main
 
 import (
+	"crypto/rand"
 	"fmt"
 	"os"
+	"text/tabwriter"
+	"time"
 
 	"github.com/bbengfort/binutil"
+	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 	"github.com/urfave/cli/v2"
+)
+
+const (
+	// Pretty print the output rather than encoding it (usually as a table).
+	pretty = "pretty"
 )
 
 func main() {
@@ -44,6 +54,66 @@ func main() {
 			Aliases: []string{"d"},
 			Usage:   "print the list of registered decoders",
 			Action:  listDecoders,
+		},
+		{
+			Name:   "ulid",
+			Usage:  "generate a new ulid",
+			Action: makeULID,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "encoder",
+					Aliases: []string{"e"},
+					Usage:   "the encoder to display the ulid repr in",
+					Value:   pretty,
+				},
+				&cli.BoolFlag{
+					Name:    "no-newline",
+					Aliases: []string{"n"},
+					Usage:   "omit newline, useful for use with pbcopy (ignored for encoder=pretty)",
+				},
+			},
+		},
+		{
+			Name:   "uuid",
+			Usage:  "generate a new uuid",
+			Action: makeUUID,
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    "encoder",
+					Aliases: []string{"e"},
+					Usage:   "the encoder to display the uuid repr in",
+					Value:   pretty,
+				},
+				&cli.BoolFlag{
+					Name:    "no-newline",
+					Aliases: []string{"n"},
+					Usage:   "omit newline, useful for use with pbcopy (ignored for encoder=pretty)",
+				},
+			},
+		},
+		{
+			Name:   "rand",
+			Usage:  "generate a new random byte array",
+			Action: makeRand,
+			Flags: []cli.Flag{
+				&cli.IntFlag{
+					Name:    "size",
+					Aliases: []string{"s"},
+					Usage:   "the number of bytes to generate",
+					Value:   16,
+				},
+				&cli.StringFlag{
+					Name:    "encoder",
+					Aliases: []string{"e"},
+					Usage:   "the encoder to display the bytes in",
+					Value:   "base64",
+				},
+				&cli.BoolFlag{
+					Name:    "no-newline",
+					Aliases: []string{"n"},
+					Usage:   "omit newline, useful for use with pbcopy",
+				},
+			},
 		},
 	}
 
@@ -101,5 +171,105 @@ func listDecoders(c *cli.Context) error {
 	for _, name := range names {
 		fmt.Printf("- %s\n", name)
 	}
+	return nil
+}
+
+func makeULID(c *cli.Context) error {
+	// TODO: add timestamp parsing and other features from native ulid command!
+	uu := ulid.Make()
+	if encoder := c.String("encoder"); encoder != pretty {
+		pipe, err := binutil.New(encoder)
+		if err != nil {
+			return cli.Exit(err, 1)
+		}
+
+		out, err := pipe.Bin2Str(uu.Bytes())
+		if err != nil {
+			return cli.Exit(err, 1)
+		}
+
+		if !c.Bool("no-newline") {
+			out += "\n"
+		}
+
+		fmt.Print(out)
+		return nil
+	}
+
+	// Pretty print a table with the ULID, timestamp, hex, and b64 encodings
+	multi, err := binutil.NewMulti("hex", "b64")
+	if err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	out := tabwriter.NewWriter(os.Stdout, 4, 4, 2, ' ', tabwriter.AlignRight|tabwriter.DiscardEmptyColumns)
+	fmt.Fprintf(out, "ULID\t%s\t\n", uu.String())
+	fmt.Fprintf(out, "Time\t%s\t\n", ulid.Time(uu.Time()).Format(time.RFC3339Nano))
+	fmt.Fprintf(out, "Hex Bytes\t%s\t\n", multi.MustBin2Str("hex", uu[:]))
+	fmt.Fprintf(out, "b64 Bytes\t%s\t\n", multi.MustBin2Str("b64", uu[:]))
+	out.Flush()
+	return nil
+}
+
+func makeUUID(c *cli.Context) error {
+	uu, err := uuid.NewRandom()
+	if err != nil {
+		return cli.Exit(err, 9)
+	}
+
+	if encoder := c.String("encoder"); encoder != pretty {
+		pipe, err := binutil.New(encoder)
+		if err != nil {
+			return cli.Exit(err, 1)
+		}
+
+		out, err := pipe.Bin2Str(uu[:])
+		if err != nil {
+			return cli.Exit(err, 1)
+		}
+
+		if !c.Bool("no-newline") {
+			out += "\n"
+		}
+
+		fmt.Print(out)
+		return nil
+	}
+
+	// Pretty print a table with the UUID, hex, and b64 encodings
+	multi, err := binutil.NewMulti("hex", "b64")
+	if err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	out := tabwriter.NewWriter(os.Stdout, 4, 4, 2, ' ', tabwriter.AlignRight|tabwriter.DiscardEmptyColumns)
+	fmt.Fprintf(out, "ULID\t%s\t\n", uu.String())
+	fmt.Fprintf(out, "Hex Bytes\t%s\t\n", multi.MustBin2Str("hex", uu[:]))
+	fmt.Fprintf(out, "b64 Bytes\t%s\t\n", multi.MustBin2Str("b64", uu[:]))
+	out.Flush()
+	return nil
+}
+
+func makeRand(c *cli.Context) error {
+	data := make([]byte, c.Int("size"))
+	if _, err := rand.Read(data); err != nil {
+		return cli.Exit(err, 9)
+	}
+
+	pipe, err := binutil.New(c.String("encoder"))
+	if err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	out, err := pipe.Bin2Str(data)
+	if err != nil {
+		return cli.Exit(err, 1)
+	}
+
+	if !c.Bool("no-newline") {
+		out += "\n"
+	}
+
+	fmt.Print(out)
 	return nil
 }
