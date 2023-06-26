@@ -1,5 +1,6 @@
 # binutil
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/bbengfort/binutil.svg)](https://pkg.go.dev/github.com/bbengfort/binutil)
 [![Tests](https://github.com/bbengfort/binutil/actions/workflows/test.yaml/badge.svg)](https://github.com/bbengfort/binutil/actions/workflows/test.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/bbengfort/binutil)](https://goreportcard.com/report/github.com/bbengfort/binutil)
 
@@ -19,7 +20,7 @@ If you have Go v1.19 or later, you can install it directly to your `$GOBIN` as f
 $ go install github.com/bbengfort/binutil/cmd/binutil@latest
 ```
 
-Finally, you can manually download the appropriate binary from the [releases page](https://github.com/rotationalio/whisper/releases) and extract to a directory in your `$PATH` such as `~/bin`.
+Finally, you can manually download the appropriate binary from the [releases page](https://github.com/bbengfort/binutil/releases) and extract to a directory in your `$PATH` such as `~/bin`.
 
 Once installed, make sure you can execute the `binutil` command as follows:
 
