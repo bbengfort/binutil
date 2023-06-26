@@ -9,6 +9,105 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestPipelineStr2Str(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+		steps    []any
+	}{
+		{"01H3W1T4BNATG1KGP7S817K4BF", "01H3W1T4BNATG1KGP7S817K4BF", []any{"ulid"}},
+		{"01H3W1T4BNATG1KGP7S817K4BF", "AYj4HRF1VqAZwsfKAnmRbw==", []any{"ulid", "b64"}},
+		{"AYj4HRF1VqAZwsfKAnmRbw==", "01H3W1T4BNATG1KGP7S817K4BF", []any{"b64", "ulid"}},
+		{"01H3W1T4BNATG1KGP7S817K4BF", "0188f81d117556a019c2c7ca0279916f", []any{"ulid", "hex"}},
+		{"0188f81d117556a019c2c7ca0279916f", "01H3W1T4BNATG1KGP7S817K4BF", []any{"hex", "ulid"}},
+		{"a1372ed62623e0037e46c31535a407041e48c21cb240acf5bc8863", "oTcu1iYj4AN+RsMVNaQHBB5IwhyyQKz1vIhj", []any{"hex", "b64"}},
+		{"oTcu1iYj4AN+RsMVNaQHBB5IwhyyQKz1vIhj", "a1372ed62623e0037e46c31535a407041e48c21cb240acf5bc8863", []any{"b64", "hex"}},
+		{"3ecb2f46-0242-4642-bdef-91d191650369", "PssvRgJCRkK975HRkWUDaQ==", []any{"uuid", "b64"}},
+		{"PssvRgJCRkK975HRkWUDaQ==", "3ecb2f46-0242-4642-bdef-91d191650369", []any{"b64", "uuid"}},
+		{"3ecb2f46-0242-4642-bdef-91d191650369", "3ecb2f4602424642bdef91d191650369", []any{"uuid", "hex"}},
+		{"3ecb2f4602424642bdef91d191650369", "3ecb2f46-0242-4642-bdef-91d191650369", []any{"hex", "uuid"}},
+		{"01H3W1T4BNATG1KGP7S817K4BF", "0188f81d-1175-56a0-19c2-c7ca0279916f", []any{"ulid", "uuid"}},
+		{"0188f81d-1175-56a0-19c2-c7ca0279916f", "01H3W1T4BNATG1KGP7S817K4BF", []any{"uuid", "ulid"}},
+		{"0188f81d-1175-56a0-19c2-c7ca0279916f", "0188f81d-1175-56a0-19c2-c7ca0279916f", []any{"uuid", "hex", "b64", "uuid"}},
+	}
+
+	for i, tc := range testCases {
+		pipe, err := binutil.New(tc.steps...)
+		require.NoError(t, err, "could not make pipeline for test case %d", i)
+
+		actual, err := pipe.Str2Str(tc.input)
+		require.NoError(t, err, "could not convert str to str for test case %d", i)
+		require.Equal(t, tc.expected, actual, "incorrect str2str conversion for test case %d", i)
+	}
+}
+
+func TestPipelineBin2Bin(t *testing.T) {
+	testCases := []struct {
+		input    []byte
+		expected []byte
+		steps    []any
+	}{
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []any{"uuid"}},
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []any{"hex"}},
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []any{"ulid", "uuid"}},
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []any{"hex", "b64"}},
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []any{"ulid", "hex", "b64", "uuid"}},
+	}
+
+	for i, tc := range testCases {
+		pipe, err := binutil.New(tc.steps...)
+		require.NoError(t, err, "could not make pipeline for test case %d", i)
+
+		actual, err := pipe.Bin2Bin(tc.input)
+		require.NoError(t, err, "could not convert str to str for test case %d", i)
+		require.Equal(t, tc.expected, actual, "incorrect str2str conversion for test case %d", i)
+	}
+}
+
+func TestPipelineBin2Str(t *testing.T) {
+	testCases := []struct {
+		input    []byte
+		expected string
+		steps    []any
+	}{
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, "54011b6f-eb92-84f6-0217-2da7bea9375a", []any{"uuid"}},
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, "2M04DPZTWJGKV045SDMYZAJDTT", []any{"ulid"}},
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, "VAEbb+uShPYCFy2nvqk3Wg", []any{"hex", "b64raw"}},
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, "54011b6feb9284f602172da7bea9375a", []any{"uuid", "hex"}},
+		{[]byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, "54011b6f-eb92-84f6-0217-2da7bea9375a", []any{"b64", "hex", "uuid"}},
+	}
+
+	for i, tc := range testCases {
+		pipe, err := binutil.New(tc.steps...)
+		require.NoError(t, err, "could not make pipeline for test case %d", i)
+
+		actual, err := pipe.Bin2Str(tc.input)
+		require.NoError(t, err, "could not convert str to str for test case %d", i)
+		require.Equal(t, tc.expected, actual, "incorrect str2str conversion for test case %d", i)
+	}
+}
+
+func TestPipelineStr2Bin(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected []byte
+		steps    []any
+	}{
+		{"54011b6f-eb92-84f6-0217-2da7bea9375a", []byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []any{"uuid"}},
+		{"54011b6f-eb92-84f6-0217-2da7bea9375a", []byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []any{"uuid", "ulid"}},
+		{"54011b6f-eb92-84f6-0217-2da7bea9375a", []byte{84, 1, 27, 111, 235, 146, 132, 246, 2, 23, 45, 167, 190, 169, 55, 90}, []any{"uuid", "hex", "b64", "ulid"}},
+	}
+
+	for i, tc := range testCases {
+		pipe, err := binutil.New(tc.steps...)
+		require.NoError(t, err, "could not make pipeline for test case %d", i)
+
+		actual, err := pipe.Str2Bin(tc.input)
+		require.NoError(t, err, "could not convert str to str for test case %d", i)
+		require.Equal(t, tc.expected, actual, "incorrect str2str conversion for test case %d", i)
+	}
+}
+
 func TestUnknownDecoder(t *testing.T) {
 	dec, err := binutil.NewDecoder(" UnknownDECODER ")
 	require.EqualError(t, err, "no registered decoder with the name \"unknowndecoder\"")
